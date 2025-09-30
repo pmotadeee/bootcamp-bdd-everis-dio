@@ -7,24 +7,45 @@ import org.openqa.selenium.support.PageFactory;
 
 import com.everis.util.Hooks;
 
+/**
+ * ResultadoPesquisaPage represents the product search results page.
+ * It provides functionality to add a product to the shopping cart.
+ *
+ * Inherits from BasePage to reuse driver utilities, waits, and logging.
+ */
 public class ResultadoPesquisaPage extends BasePage {
 
-	@FindBy(xpath = "//*[text()='Add to cart']")
-	protected WebElement botaoAdicionarAoCarrinho;
-	
-	@FindBy(css = "[title='Proceed to checkout']")
-	protected WebElement botaoProsseguir;
-	
-	public ResultadoPesquisaPage() {
-		PageFactory.initElements(Hooks.getDriver(), this);
-	}
+    /** "Add to cart" button available in search results */
+    @FindBy(xpath = "//*[text()='Add to cart']")
+    protected WebElement addToCartButton;
 
-	public void adicionarProdutoAoCarrinho(String nomeProduto) {
-		WebElement nomeProdutoTela = driver.findElement(By.xpath(".//*[@itemprop='name']/*[contains(text(), '" + nomeProduto + "')] | .//*[@itemprop='name'][text()='" + nomeProduto + "']"));
-		moveToElement(nomeProdutoTela);
-		botaoAdicionarAoCarrinho.click();
-		waitElement(botaoProsseguir, 10).click();
-		log("Adicionou o produto [" + nomeProduto + "] ao carrinho");
-	}
+    /** "Proceed to checkout" button shown after adding a product */
+    @FindBy(css = "[title='Proceed to checkout']")
+    protected WebElement proceedToCheckoutButton;
 
+    /**
+     * Constructor initializes the web elements on this page
+     * using Selenium's PageFactory.
+     */
+    public ResultadoPesquisaPage() {
+        PageFactory.initElements(Hooks.getDriver(), this);
+    }
+
+    /**
+     * Adds the specified product to the shopping cart.
+     * It first locates the product by its name, hovers over it,
+     * then clicks on "Add to cart" and proceeds to checkout.
+     *
+     * @param productName the name of the product to be added to the cart
+     */
+    public void addProductToCart(String productName) {
+        WebElement productElement = driver.findElement(
+                By.xpath(".//*[@itemprop='name']/*[contains(text(), '" + productName + "')] "
+                        + "| .//*[@itemprop='name'][text()='" + productName + "']"));
+
+        moveToElement(productElement);
+        addToCartButton.click();
+        waitElement(proceedToCheckoutButton, 10).click();
+        log("Added product [" + productName + "] to the cart.");
+    }
 }

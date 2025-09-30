@@ -11,79 +11,112 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+/**
+ * Utils provides common utility methods for handling files, dates,
+ * and simple text operations within the automation framework.
+ */
 public class Utils {
 
-	public static void waitForFileExistsInPath(String dir, int timeOutInSeconds) {
-		File fl = new File(dir);
-		File[] files = fl.listFiles(new FileFilter() {
-			public boolean accept(File file) {
-				return file.isFile();
-			}
-		});
+    /**
+     * Waits until at least one file exists in the specified directory,
+     * or until the timeout is reached.
+     *
+     * @param dir              directory path to monitor
+     * @param timeOutInSeconds timeout in seconds
+     */
+    public static void waitForFileExistsInPath(String dir, int timeOutInSeconds) {
+        File folder = new File(dir);
+        FileFilter filter = File::isFile;
 
-		int contador = 0;
-		boolean atingiuTimeout = false;
-		while (files.length == 0 && !atingiuTimeout) {
-			try {
-				Thread.sleep(200);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			contador++;
-			atingiuTimeout = timeOutInSeconds == contador / 5;
-			files = fl.listFiles(new FileFilter() {
-				public boolean accept(File file) {
-					return file.isFile();
-				}
-			});
-		}
-		if (atingiuTimeout) {
-			System.err.println("Nao foi gerado arquivo no caminho - " + dir + " apos " + timeOutInSeconds + " segundos");
-		}
-	}
+        File[] files = folder.listFiles(filter);
+        int counter = 0;
+        boolean timeoutReached = false;
 
-	public static String getDateTime(String formato) {
-		DateFormat dateFormat = new SimpleDateFormat(formato);
-		Date date = new Date();
-		return dateFormat.format(date);
-	}
+        while ((files == null || files.length == 0) && !timeoutReached) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                e.printStackTrace();
+            }
 
-	public static String getDateTime(String formato, int intAcrescimoDias) {
-		DateFormat dateFormat = new SimpleDateFormat(formato);
-		Calendar dataAtual = Calendar.getInstance();
-		dataAtual.add(Calendar.DAY_OF_MONTH, intAcrescimoDias);
-		return dateFormat.format(dataAtual.getTime());
-	}
+            counter++;
+            timeoutReached = timeOutInSeconds == counter / 5;
+            files = folder.listFiles(filter);
+        }
 
-	public static String getDate() {
-		SimpleDateFormat sdfDataAtual = new SimpleDateFormat("dd/MM/yyyy");
-		Date now = new Date();
-		String strDate = sdfDataAtual.format(now);
-		return strDate;
-	}
+        if (timeoutReached) {
+            System.err.println("No file was generated in path - " + dir +
+                               " after " + timeOutInSeconds + " seconds.");
+        }
+    }
 
-	public static String getHour() {
-		SimpleDateFormat sdfDate = new SimpleDateFormat("HH:mm:ss");
-		Date now = new Date();
-		String strDate = sdfDate.format(now);
-		return strDate;
-	}
+    /**
+     * Returns the current date/time formatted according to the given pattern.
+     *
+     * @param format date format (e.g. "dd/MM/yyyy HH:mm:ss")
+     * @return formatted date/time as String
+     */
+    public static String getDateTime(String format) {
+        DateFormat dateFormat = new SimpleDateFormat(format);
+        return dateFormat.format(new Date());
+    }
 
-	public static String getDateHour() {
-		SimpleDateFormat sdfDataAtual = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-		Date now = new Date();
-		String strDate = sdfDataAtual.format(now);
-		return strDate;
-	}
+    /**
+     * Returns the date/time with a day offset, formatted according to the given pattern.
+     *
+     * @param format           date format (e.g. "dd/MM/yyyy")
+     * @param daysToIncrement  number of days to add (can be negative)
+     * @return formatted date/time as String
+     */
+    public static String getDateTime(String format, int daysToIncrement) {
+        DateFormat dateFormat = new SimpleDateFormat(format);
+        Calendar currentDate = Calendar.getInstance();
+        currentDate.add(Calendar.DAY_OF_MONTH, daysToIncrement);
+        return dateFormat.format(currentDate.getTime());
+    }
 
-	public static String readFileToString(String path, Charset encoding) {
-		byte[] encoded = null;
-		try {
-			encoded = Files.readAllBytes(Paths.get(path));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return new String(encoded, encoding);
-	}
+    /**
+     * Returns the current date formatted as dd/MM/yyyy.
+     *
+     * @return current date string
+     */
+    public static String getDate() {
+        return new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+    }
 
+    /**
+     * Returns the current hour formatted as HH:mm:ss.
+     *
+     * @return current time string
+     */
+    public static String getHour() {
+        return new SimpleDateFormat("HH:mm:ss").format(new Date());
+    }
+
+    /**
+     * Returns the current date and hour formatted as dd/MM/yyyy HH:mm:ss.
+     *
+     * @return current date and time string
+     */
+    public static String getDateHour() {
+        return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date());
+    }
+
+    /**
+     * Reads a text file into a string using the given charset encoding.
+     *
+     * @param path     the file path
+     * @param encoding the character set to use
+     * @return file content as string, or empty string if an error occurs
+     */
+    public static String readFileToString(String path, Charset encoding) {
+        try {
+            byte[] encoded = Files.readAllBytes(Paths.get(path));
+            return new String(encoded, encoding);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
 }
